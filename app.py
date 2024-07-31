@@ -25,7 +25,7 @@ ORACLE_DATABASE_PASSWORD = os.getenv('ORACLE_DATABASE_PASSWORD', 'dbz')
 app = Flask(__name__)
 
 # Initialize Oracle client with the updated library directory
-cx_Oracle.init_oracle_client(lib_dir="/root/something/instantclient_19_24")
+cx_Oracle.init_oracle_client(lib_dir="/root/oracle_gabs/instantclient_19_24")
 #cx_Oracle.init_oracle_client(lib_dir="/Users/gabriel.cerioni/instantclient")
 
 # Oracle connection setup

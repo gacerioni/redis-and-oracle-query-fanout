@@ -1,16 +1,21 @@
 #!/bin/bash
 
 # Define installation paths
-ORACLE_CLIENT_DIR="/root/something/instantclient_19_24"
+ORACLE_CLIENT_DIR="/root/oracle_gabs/instantclient_19_24"
+
+sudo apt update
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
 
 # Update package list and install necessary packages
-sudo apt-get update && sudo apt-get install -y python3.12 python3.12-dev python3.12-venv unzip
+sudo apt-get install -y python3.12 python3.12-dev python3.12-venv unzip
 
 # Check if Oracle Instant Client directory already exists
 if [ ! -d "$ORACLE_CLIENT_DIR" ]; then
     # Unzip the Oracle Instant Client
     echo "Unzipping Oracle Instant Client..."
-    unzip ./oracle_dependencies/instantclient-basic-linux.x64-19.24.0.0.0dbru.zip -d /root/something/
+    unzip ./oracle_dependencies/instantclient-basic-linux.x64-19.24.0.0.0dbru.zip -d /root/oracle_gabs/
     if [ $? -ne 0 ]; then
         echo "Failed to unzip Oracle Instant Client."
         exit 1
