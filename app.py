@@ -10,10 +10,7 @@ from redisearch.client import IndexType
 # Carregar variáveis de ambiente
 load_dotenv()
 
-# Constantes
-REDIS_URL = os.getenv('GABS_REDIS_URL', "redis://localhost:6379")
-OPENAI_API_KEY = os.getenv('GABS_OPENAI_API_KEY', 'sk_nadanadanada')
-
+# Constants
 REDIS_DATABASE_HOST = os.getenv('REDIS_DATABASE_HOST', '34.198.15.233')
 REDIS_DATABASE_PORT = os.getenv('REDIS_DATABASE_PORT', 19419)
 REDIS_DATABASE_PASSWORD = os.getenv('REDIS_DATABASE_PASSWORD', 'secret42')
@@ -25,12 +22,11 @@ ORACLE_DATABASE_SERVICE_NAME = os.getenv('ORACLE_DATABASE_SERVICE_NAME', 'ORCLPD
 ORACLE_DATABASE_USER = os.getenv('ORACLE_DATABASE_USER', 'c##dbzuser')
 ORACLE_DATABASE_PASSWORD = os.getenv('ORACLE_DATABASE_PASSWORD', 'dbz')
 
-
 app = Flask(__name__)
 
 # Initialize Oracle client with the updated library directory
-#cx_Oracle.init_oracle_client(lib_dir="/root/something/instantclient_19_24")
-cx_Oracle.init_oracle_client(lib_dir="/Users/gabriel.cerioni/instantclient")
+cx_Oracle.init_oracle_client(lib_dir="/root/something/instantclient_19_24")
+#cx_Oracle.init_oracle_client(lib_dir="/Users/gabriel.cerioni/instantclient")
 
 # Oracle connection setup
 oracle_dsn = cx_Oracle.makedsn(ORACLE_DATABASE_HOST, ORACLE_DATABASE_PORT, service_name=ORACLE_DATABASE_SERVICE_NAME)
@@ -41,6 +37,7 @@ oracle_cursor = oracle_conn.cursor()
 redis_client = redis.StrictRedis(host=REDIS_DATABASE_HOST, port=REDIS_DATABASE_PORT, password=REDIS_DATABASE_PASSWORD)
 redis_search_client = Client(REDIS_INDEX_NAME, conn=redis_client)
 index_prefix = REDIS_INDEX_PREFIX
+
 
 def create_redis_index():
     """
@@ -54,7 +51,9 @@ def create_redis_index():
         definition = IndexDefinition(prefix=[index_prefix], index_type=IndexType.JSON)
         redis_search_client.create_index(schema, definition=definition)
 
+
 create_redis_index()
+
 
 @app.route('/query', methods=['GET'])
 def query():
@@ -73,7 +72,9 @@ def query():
     oracle_latency_ms = (time.time() - oracle_start_time) * 1000  # Convert to milliseconds
 
     # Redis search remains unchanged
-    redis_query = Query(f'@NM_LOGR:{search_term}').return_fields("$.ID_ESTABELECIMENTO_SAUDE_PK", "$.NM_RAZ_SOC", "$.NM_FANTS", "$.NM_LOGR", "$.NM_NUMERO", "$.NM_BAIRRO", "$.CD_CEP")
+    redis_query = Query(f'@NM_LOGR:{search_term}').return_fields("$.ID_ESTABELECIMENTO_SAUDE_PK", "$.NM_RAZ_SOC",
+                                                                 "$.NM_FANTS", "$.NM_LOGR", "$.NM_NUMERO",
+                                                                 "$.NM_BAIRRO", "$.CD_CEP")
     redis_start_time = time.time()
     redis_results = redis_search_client.search(redis_query)
     redis_latency_ms = (time.time() - redis_start_time) * 1000  # Convert to milliseconds
