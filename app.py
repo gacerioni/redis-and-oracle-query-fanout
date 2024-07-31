@@ -1,103 +1,76 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 import cx_Oracle
 import redis
-from redisearch import Client, TextField, NumericField, IndexDefinition, Query
-import json
+from redisearch import Client, TextField, IndexDefinition, Query
 import time
 
 from redisearch.client import IndexType
 
 app = Flask(__name__)
 
-# Initialize Oracle client
+# Initialize Oracle client with the updated library directory
+#cx_Oracle.init_oracle_client(lib_dir="/root/something/instantclient_19_24")
 cx_Oracle.init_oracle_client(lib_dir="/Users/gabriel.cerioni/instantclient")
 
 # Oracle connection setup
 oracle_dsn = cx_Oracle.makedsn("34.198.15.233", "1521", service_name="ORCLPDB1")
-oracle_conn = cx_Oracle.connect(user="c##dbzuser", password="nada", dsn=oracle_dsn)
+oracle_conn = cx_Oracle.connect(user="c##dbzuser", password="dbz", dsn=oracle_dsn)
 oracle_cursor = oracle_conn.cursor()
 
 # Redis connection setup
-redis_client = redis.StrictRedis(host='34.198.15.233', port=19419, password='nada')
-redis_search_client = Client('track_index', conn=redis_client)
-
+redis_client = redis.StrictRedis(host='34.198.15.233', port=19419, password='secret42')
+redis_search_client = Client('estab_sus', conn=redis_client)
+index_prefix = 'tb_estabelecimento_saude:'
 
 def create_redis_index():
     """
     Creates the index in Redis if it doesn't exist.
     """
     try:
-        # Check if the index exists by attempting to get its info
         redis_search_client.info()
     except Exception as e:
         print(f"Creating index because: {str(e)}")
-
-        # Index does not exist, create it
-        schema = (
-            TextField("$.NAME", as_name="NAME"),  # JSON path with an alias
-            TextField("$.COMPOSER", as_name="COMPOSER")
-        )
-        definition = IndexDefinition(prefix=['track:'], index_type=IndexType.JSON)
+        schema = (TextField("$.NM_LOGR", as_name="NM_LOGR"),)
+        definition = IndexDefinition(prefix=[index_prefix], index_type=IndexType.JSON)
         redis_search_client.create_index(schema, definition=definition)
-
 
 create_redis_index()
 
-
 @app.route('/query', methods=['GET'])
 def query():
-    search_term = request.args.get('search_term', '')
+    search_term = request.args.get('search_term', '').upper()  # Convert search term to upper case
+    oracle_search_term = search_term.replace('*', '')  # Remove '*' for Oracle query
 
-    # Query Oracle
+    # Oracle query with UPPER function for case-insensitive comparison
     oracle_query = """
-    SELECT TRACKID, NAME, ALBUMID, MEDIATYPEID, GENREID, COMPOSER, MILLISECONDS, BYTES, UNITPRICE
-    FROM CHINOOK.TRACK
-    WHERE NAME LIKE :search_term
+    SELECT ID_ESTABELECIMENTO_SAUDE_PK, NM_RAZ_SOC, NM_FANTS, NM_LOGR, NM_NUMERO, NM_BAIRRO, CD_CEP
+    FROM CHINOOK.TB_ESTABELECIMENTO_SAUDE
+    WHERE UPPER(NM_LOGR) LIKE :search_term
     """
     oracle_start_time = time.time()
-    oracle_cursor.execute(oracle_query, search_term=f'%{search_term}%')
+    oracle_cursor.execute(oracle_query, search_term=f'%{oracle_search_term}%')
     oracle_results = oracle_cursor.fetchall()
-    oracle_latency = time.time() - oracle_start_time
+    oracle_latency_ms = (time.time() - oracle_start_time) * 1000  # Convert to milliseconds
 
-    # Query Redis
-    full_search_term = f'@NAME:{search_term}'
-    redis_query = Query(full_search_term)
+    # Redis search remains unchanged
+    redis_query = Query(f'@NM_LOGR:{search_term}').return_fields("$.ID_ESTABELECIMENTO_SAUDE_PK", "$.NM_RAZ_SOC", "$.NM_FANTS", "$.NM_LOGR", "$.NM_NUMERO", "$.NM_BAIRRO", "$.CD_CEP")
     redis_start_time = time.time()
     redis_results = redis_search_client.search(redis_query)
-    redis_latency = time.time() - redis_start_time
-
-    # Format Redis results
-    formatted_redis_results = []
-    for doc in redis_results.docs:
-        try:
-            # Parse the JSON string into a Python dictionary
-            redis_data = json.loads(doc.json)
-
-            # Append formatted result
-            formatted_redis_results.append({
-                "id": doc.id,
-                "NAME": redis_data["NAME"],
-                "TRACKID": redis_data["TRACKID"],
-                "ALBUMID": redis_data["ALBUMID"],
-                "MEDIATYPEID": redis_data["MEDIATYPEID"],
-                "GENREID": redis_data["GENREID"],
-                "COMPOSER": redis_data["COMPOSER"],
-                "MILLISECONDS": redis_data["MILLISECONDS"],
-                "BYTES": redis_data["BYTES"],
-                "UNITPRICE": redis_data["UNITPRICE"]
-            })
-        except (KeyError, json.JSONDecodeError) as e:
-            print(f"Error parsing Redis JSON: {e}")
-            # Print the whole JSON for debugging
-            print(f"Raw JSON: {doc.json}")
+    redis_latency_ms = (time.time() - redis_start_time) * 1000  # Convert to milliseconds
 
     return jsonify({
         "oracle_results": oracle_results,
-        "oracle_latency": oracle_latency,
-        "redis_results": formatted_redis_results,
-        "redis_latency": redis_latency
+        "oracle_latency_ms": oracle_latency_ms,
+        "redis_results": [doc.__dict__ for doc in redis_results.docs],  # Directly pass document data
+        "redis_latency_ms": redis_latency_ms
     })
 
 
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

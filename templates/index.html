@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta Estabelecimento SUS - Por Logradouro</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .header-images {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Align items to the left */
+            gap: 20px; /* Controls the space between the logos */
+            padding-left: 20px; /* Adds padding on the left for some spacing from the edge */
+        }
+
+        img {
+            max-height: 100px; /* Sets a maximum height for the images */
+            width: auto; /* Ensures the width is auto-adjusted to maintain aspect ratio */
+        }
+
+        img.prodam-logo {
+            max-height: 50px; /* Smaller size for PRODAM logo */
+        }
+    </style>
+</head>
+<body>
+    <h1>Consulta Estabelecimento SUS</h1>
+    <div class="header-images">
+        <img src="{{ url_for('static', filename='images/REDIS_LOGO.png') }}" alt="Redis Logo">
+        <img src="{{ url_for('static', filename='images/PRODAM_LOGO.png') }}" alt="PRODAM Logo" class="prodam-logo">
+    </div>
+    <h2>Neste exemplo usamos apenas o campo NM_LOGR</h2>
+    <h3>Tabela: SYS_SUS_DES.TB_ESTABELECIMENTO_SAUDE</h3>
+    <form action="/query" method="get">
+        <label for="search_term">Busca Logradouro:</label>
+        <input type="text" id="search_term" name="search_term">
+        <button type="submit">Search</button>
+    </form>
+</body>
+</html>
