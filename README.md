@@ -16,16 +16,16 @@ Before you begin, ensure you have the following installed:
 To run the project, you need to set up environment variables. Create a `.env` file in the project root directory and add the following variables:
 
 ```shell
-REDIS_DATABASE_HOST=34.198.15.233
+REDIS_DATABASE_HOST=<HOSTNAME_OR_IP>
 REDIS_DATABASE_PORT=19419
-REDIS_DATABASE_PASSWORD=secret42
+REDIS_DATABASE_PASSWORD=blablabla
 REDIS_INDEX_NAME=estab_sus
 REDIS_INDEX_PREFIX=tb_estabelecimento_saude:
-ORACLE_DATABASE_HOST=34.198.15.233
+ORACLE_DATABASE_HOST=<HOSTNAME_OR_IP>
 ORACLE_DATABASE_PORT=1521
 ORACLE_DATABASE_SERVICE_NAME=ORCLPDB1
 ORACLE_DATABASE_USER=c##dbzuser
-ORACLE_DATABASE_PASSWORD=dbz
+ORACLE_DATABASE_PASSWORD=blablabla
 ```
 
 Replace the default values with those that apply to your setup.
