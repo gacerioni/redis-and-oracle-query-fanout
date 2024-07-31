@@ -1,10 +1,30 @@
+import os
 from flask import Flask, jsonify, request, render_template
 import cx_Oracle
 import redis
 from redisearch import Client, TextField, IndexDefinition, Query
 import time
-
+from dotenv import load_dotenv
 from redisearch.client import IndexType
+
+# Carregar variáveis de ambiente
+load_dotenv()
+
+# Constantes
+REDIS_URL = os.getenv('GABS_REDIS_URL', "redis://localhost:6379")
+OPENAI_API_KEY = os.getenv('GABS_OPENAI_API_KEY', 'sk_nadanadanada')
+
+REDIS_DATABASE_HOST = os.getenv('REDIS_DATABASE_HOST', '34.198.15.233')
+REDIS_DATABASE_PORT = os.getenv('REDIS_DATABASE_PORT', 19419)
+REDIS_DATABASE_PASSWORD = os.getenv('REDIS_DATABASE_PASSWORD', 'secret42')
+REDIS_INDEX_NAME = os.getenv('REDIS_INDEX_NAME', 'estab_sus')
+REDIS_INDEX_PREFIX = os.getenv('REDIS_INDEX_PREFIX', 'tb_estabelecimento_saude:')
+ORACLE_DATABASE_HOST = os.getenv('ORACLE_DATABASE_HOST', '34.198.15.233')
+ORACLE_DATABASE_PORT = os.getenv('ORACLE_DATABASE_PORT', 1521)
+ORACLE_DATABASE_SERVICE_NAME = os.getenv('ORACLE_DATABASE_SERVICE_NAME', 'ORCLPDB1')
+ORACLE_DATABASE_USER = os.getenv('ORACLE_DATABASE_USER', 'c##dbzuser')
+ORACLE_DATABASE_PASSWORD = os.getenv('ORACLE_DATABASE_PASSWORD', 'dbz')
+
 
 app = Flask(__name__)
 
@@ -13,14 +33,14 @@ app = Flask(__name__)
 cx_Oracle.init_oracle_client(lib_dir="/Users/gabriel.cerioni/instantclient")
 
 # Oracle connection setup
-oracle_dsn = cx_Oracle.makedsn("34.198.15.233", "1521", service_name="ORCLPDB1")
-oracle_conn = cx_Oracle.connect(user="c##dbzuser", password="dbz", dsn=oracle_dsn)
+oracle_dsn = cx_Oracle.makedsn(ORACLE_DATABASE_HOST, ORACLE_DATABASE_PORT, service_name=ORACLE_DATABASE_SERVICE_NAME)
+oracle_conn = cx_Oracle.connect(user=ORACLE_DATABASE_USER, password=ORACLE_DATABASE_PASSWORD, dsn=oracle_dsn)
 oracle_cursor = oracle_conn.cursor()
 
 # Redis connection setup
-redis_client = redis.StrictRedis(host='34.198.15.233', port=19419, password='secret42')
-redis_search_client = Client('estab_sus', conn=redis_client)
-index_prefix = 'tb_estabelecimento_saude:'
+redis_client = redis.StrictRedis(host=REDIS_DATABASE_HOST, port=REDIS_DATABASE_PORT, password=REDIS_DATABASE_PASSWORD)
+redis_search_client = Client(REDIS_INDEX_NAME, conn=redis_client)
+index_prefix = REDIS_INDEX_PREFIX
 
 def create_redis_index():
     """
@@ -64,7 +84,6 @@ def query():
         "redis_results": [doc.__dict__ for doc in redis_results.docs],  # Directly pass document data
         "redis_latency_ms": redis_latency_ms
     })
-
 
 
 @app.route('/')
