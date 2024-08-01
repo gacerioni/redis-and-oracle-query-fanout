@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Query Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .latency-info { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Resultados da Consulta</h1>
+    <h2>Resultados do Oracle</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Razão Social</th>
+                <th>Nome Fantasia</th>
+                <th>Logradouro</th>
+                <th>Número</th>
+                <th>Bairro</th>
+                <th>CEP</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in oracle_results %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+                <td>{{ row[2] }}</td>
+                <td>{{ row[3] }}</td>
+                <td>{{ row[4] }}</td>
+                <td>{{ row[5] }}</td>
+                <td>{{ row[6] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Resultados do Redis</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Razão Social</th>
+                <th>Nome Fantasia</th>
+                <th>Logradouro</th>
+                <th>Número</th>
+                <th>Bairro</th>
+                <th>CEP</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in redis_results %}
+            <tr>
+                <td>{{ doc['$.ID_ESTABELECIMENTO_SAUDE_PK'] }}</td>
+                <td>{{ doc['$.NM_RAZ_SOC'] }}</td>
+                <td>{{ doc['$.NM_FANTS'] }}</td>
+                <td>{{ doc['$.NM_LOGR'] }}</td>
+                <td>{{ doc['$.NM_NUMERO'] }}</td>
+                <td>{{ doc['$.NM_BAIRRO'] }}</td>
+                <td>{{ doc['$.CD_CEP'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="latency-info">
+        <p>Oracle Query Latency: {{ oracle_latency_ms }} ms</p>
+        <p>Redis Query Latency: {{ redis_latency_ms }} ms</p>
+    </div>
+</body>
+</html>

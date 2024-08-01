@@ -25,8 +25,8 @@ ORACLE_DATABASE_PASSWORD = os.getenv('ORACLE_DATABASE_PASSWORD', 'dbz')
 app = Flask(__name__)
 
 # Initialize Oracle client with the updated library directory
-cx_Oracle.init_oracle_client(lib_dir="/root/oracle_gabs/instantclient_19_24")
-#cx_Oracle.init_oracle_client(lib_dir="/Users/gabriel.cerioni/instantclient")
+#cx_Oracle.init_oracle_client(lib_dir="/root/oracle_gabs/instantclient_19_24")
+cx_Oracle.init_oracle_client(lib_dir="/Users/gabriel.cerioni/instantclient")
 
 # Oracle connection setup
 oracle_dsn = cx_Oracle.makedsn(ORACLE_DATABASE_HOST, ORACLE_DATABASE_PORT, service_name=ORACLE_DATABASE_SERVICE_NAME)
@@ -79,12 +79,12 @@ def query():
     redis_results = redis_search_client.search(redis_query)
     redis_latency_ms = (time.time() - redis_start_time) * 1000  # Convert to milliseconds
 
-    return jsonify({
-        "oracle_results": oracle_results,
-        "oracle_latency_ms": oracle_latency_ms,
-        "redis_results": [doc.__dict__ for doc in redis_results.docs],  # Directly pass document data
-        "redis_latency_ms": redis_latency_ms
-    })
+    return render_template('results.html',
+                           oracle_results=oracle_results,
+                           oracle_latency_ms=oracle_latency_ms,
+                           redis_results=[doc.__dict__ for doc in redis_results.docs],
+                           redis_latency_ms=redis_latency_ms)
+
 
 
 @app.route('/')
